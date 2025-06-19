@@ -8,6 +8,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import EmailVerification from './pages/EmailVerification'
 import DilekceYazma from './pages/DilekceYazma'
 import DavaAnalizi from './pages/DavaAnalizi'
 import HukukAsistani from './pages/HukukAsistani'
@@ -32,6 +33,31 @@ function App() {
         if (userData && !error) {
           setUser(userData)
           setAuthenticated(true)
+        } else if (error && error.code === 'PGRST116') {
+          // İlk oturum açtığında da kullanıcı profili yoksa oluştur
+          const metadata = session.user.user_metadata || {}
+          const newUser = {
+            user_id: session.user.id,
+            email: session.user.email || '',
+            first_name: metadata.first_name || '',
+            last_name: metadata.last_name || '',
+            profession: metadata.profession || '',
+            bar_association: metadata.bar_association || null,
+            phone: metadata.phone || null,
+            city: metadata.city || null,
+            subscription_tier: 'free'
+          }
+
+          const { data: createdUser, error: createError } = await supabase
+            .from('yargizeka.users')
+            .insert(newUser)
+            .select()
+            .single()
+
+          if (createdUser && !createError) {
+            setUser(createdUser)
+            setAuthenticated(true)
+          }
         }
       }
     }
@@ -50,10 +76,17 @@ function App() {
             .single()
 
           if (error && error.code === 'PGRST116') {
-            // Kullanıcı yoksa oluştur
+            // Kullanıcı yoksa oluştur - user_metadata'dan bilgileri al
+            const metadata = session.user.user_metadata || {}
             const newUser = {
               user_id: session.user.id,
               email: session.user.email || '',
+              first_name: metadata.first_name || '',
+              last_name: metadata.last_name || '',
+              profession: metadata.profession || '',
+              bar_association: metadata.bar_association || null,
+              phone: metadata.phone || null,
+              city: metadata.city || null,
               subscription_tier: 'free'
             }
 
@@ -86,6 +119,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/email-verification" element={<EmailVerification />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/giris" element={<Login />} />

@@ -8,6 +8,12 @@ CREATE SCHEMA IF NOT EXISTS yargizeka;
 CREATE TABLE yargizeka.users (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    profession VARCHAR(100) NOT NULL,
+    bar_association VARCHAR(200),
+    phone VARCHAR(20),
+    city VARCHAR(100),
     subscription_tier VARCHAR(50) DEFAULT 'free' CHECK (subscription_tier IN ('free', 'basic', 'premium')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

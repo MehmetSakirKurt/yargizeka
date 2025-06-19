@@ -24,7 +24,12 @@ const Header: React.FC = () => {
       
       <div className="header-right">
         <div className="header-user-info">
-          <span className="header-user-email">{user?.email}</span>
+          <span className="header-user-name">
+            {user?.first_name && user?.last_name 
+              ? `${user.first_name} ${user.last_name}` 
+              : user?.email}
+          </span>
+          <span className="header-user-profession">{user?.profession}</span>
           <span className="header-user-tier">{user?.subscription_tier}</span>
         </div>
         

@@ -15,6 +15,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export interface User {
   user_id: string
   email: string
+  first_name: string
+  last_name: string
+  profession: string
+  bar_association?: string
+  phone?: string
+  city?: string
   subscription_tier: string
   created_at?: string
   updated_at?: string

@@ -665,6 +665,16 @@ body {
   flex-direction: column;
 }
 
+.form-row {
+  display: flex;
+  gap: var(--spacing-4);
+  align-items: flex-end;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
 .auth-submit-btn {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   color: white;
@@ -715,6 +725,82 @@ body {
 
 .auth-link:hover {
   text-decoration: underline;
+}
+
+/* Email Verification Sayfası */
+.verification-icon {
+  text-align: center;
+  margin-bottom: var(--spacing-4);
+}
+
+.verification-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  margin: var(--spacing-6) 0;
+  padding: var(--spacing-4);
+  background: var(--gray-50);
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-200);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-size: 0.9rem;
+}
+
+.verification-info {
+  margin: var(--spacing-6) 0;
+  padding: var(--spacing-4);
+  background: #e6f3ff;
+  border-radius: var(--radius);
+  border: 1px solid #b3d9ff;
+}
+
+.verification-info h3 {
+  color: var(--primary);
+  margin-bottom: var(--spacing-3);
+  font-size: 1rem;
+}
+
+.verification-info ol {
+  margin-left: var(--spacing-4);
+  line-height: 1.6;
+}
+
+.verification-info li {
+  margin-bottom: var(--spacing-2);
+  color: var(--gray-700);
+}
+
+.resend-section {
+  margin: var(--spacing-6) 0;
+  padding: var(--spacing-4);
+  background: var(--gray-50);
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-200);
+}
+
+.resend-section p {
+  margin-bottom: var(--spacing-3);
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.resend-form {
+  display: flex;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+}
+
+.resend-form input {
+  flex: 1;
+}
+
+.resend-form button {
+  white-space: nowrap;
 }
 
 /* Hata ve Başarı Mesajları */
