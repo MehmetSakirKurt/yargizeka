@@ -16,7 +16,7 @@ import YargitayArama from './pages/YargitayArama'
 import Profil from './pages/Profil'
 
 function App() {
-  const { setUser, setAuthenticated, setLoading } = useAppStore()
+  const { setAuthState, setLoading } = useAppStore()
 
   useEffect(() => {
     // Loading state'i başlat
@@ -38,9 +38,8 @@ function App() {
             .single()
 
           if (userData && !error) {
-            console.log('Kullanıcı profili bulundu')
-            setUser(userData)
-            setAuthenticated(true)
+            console.log('Kullanıcı profili bulundu:', userData)
+            setAuthState(userData, true)
           } else if (error && error.code === 'PGRST116') {
             console.log('Kullanıcı profili bulunamadı, oluşturuluyor...')
             // İlk oturum açtığında da kullanıcı profili yoksa oluştur
@@ -64,24 +63,23 @@ function App() {
               .single()
 
             if (createdUser && !createError) {
-              console.log('Kullanıcı profili oluşturuldu')
-              setUser(createdUser)
-              setAuthenticated(true)
+              console.log('Kullanıcı profili oluşturuldu:', createdUser)
+              setAuthState(createdUser, true)
             } else {
               console.error('Kullanıcı profili oluşturulamadı:', createError)
-              setAuthenticated(false)
+              setAuthState(null, false)
             }
           } else {
             console.error('Kullanıcı profili alınamadı:', error)
-            setAuthenticated(false)
+            setAuthState(null, false)
           }
         } else {
           console.log('Session bulunamadı')
-          setAuthenticated(false)
+          setAuthState(null, false)
         }
       } catch (error) {
         console.error('Session kontrol hatası:', error)
-        setAuthenticated(false)
+        setAuthState(null, false)
       } finally {
         // Loading state'i bitir
         console.log('Loading tamamlandı')
@@ -141,27 +139,24 @@ function App() {
               console.log('Kullanıcı oluşturma sonucu:', createdUser, createError)
 
               if (createdUser && !createError) {
-                setUser(createdUser)
-                setAuthenticated(true)
-                console.log('Kullanıcı store\'a eklendi ve authenticated=true yapıldı')
+                setAuthState(createdUser, true)
+                console.log('Kullanıcı store\'a eklendi ve authenticated=true yapıldı:', createdUser)
               } else {
                 console.error('Kullanıcı oluşturulamadı:', createError)
-                setAuthenticated(false)
+                setAuthState(null, false)
               }
             } else if (userData && !error) {
-              setUser(userData)
-              setAuthenticated(true)
-              console.log('Mevcut kullanıcı store\'a eklendi ve authenticated=true yapıldı')
+              setAuthState(userData, true)
+              console.log('Mevcut kullanıcı store\'a eklendi ve authenticated=true yapıldı:', userData)
             } else if (error) {
               console.error('Veritabanı hatası:', error)
-              setAuthenticated(false)
+              setAuthState(null, false)
             }
           } finally {
             setLoading(false)
           }
         } else if (event === 'SIGNED_OUT') {
-          setUser(null)
-          setAuthenticated(false)
+          setAuthState(null, false)
           setLoading(false)
           console.log('Kullanıcı çıkış yaptı')
         }
@@ -169,7 +164,7 @@ function App() {
     )
 
     return () => subscription.unsubscribe()
-  }, [setUser, setAuthenticated, setLoading])
+  }, [setAuthState, setLoading])
 
   return (
     <Router>

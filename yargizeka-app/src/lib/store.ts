@@ -18,6 +18,7 @@ interface AppState {
   // Actions
   setUser: (user: User | null) => void
   setAuthenticated: (authenticated: boolean) => void
+  setAuthState: (user: User | null, authenticated: boolean) => void
   setCurrentPage: (page: string) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -46,6 +47,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Actions
   setUser: (user) => set({ user }),
   setAuthenticated: (authenticated) => set({ isAuthenticated: authenticated }),
+  setAuthState: (user: User | null, authenticated: boolean) => set({ 
+    user, 
+    isAuthenticated: authenticated 
+  }),
   setCurrentPage: (page) => set({ currentPage: page }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),

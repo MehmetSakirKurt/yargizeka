@@ -18,8 +18,8 @@ const Layout: React.FC = () => {
     )
   }
 
-  if (!isAuthenticated) {
-    console.log('Kullanıcı authenticated değil, login\'e yönlendiriliyor')
+  if (!isAuthenticated || !user) {
+    console.log('Kullanıcı authenticated değil veya user bilgisi yok, login\'e yönlendiriliyor')
     return <Navigate to="/login" replace />
   }
 
