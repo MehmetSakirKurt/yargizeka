@@ -5,7 +5,9 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 
 const Layout: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAppStore()
+  const { isAuthenticated, isLoading, user } = useAppStore()
+
+  console.log('Layout render - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'user:', user)
 
   if (isLoading) {
     return (
@@ -17,6 +19,7 @@ const Layout: React.FC = () => {
   }
 
   if (!isAuthenticated) {
+    console.log('Kullanıcı authenticated değil, login\'e yönlendiriliyor')
     return <Navigate to="/login" replace />
   }
 

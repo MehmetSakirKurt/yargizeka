@@ -67,7 +67,14 @@ function App() {
     // Auth state değişikliklerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state değişti:', event, session?.user?.email, session?.user?.email_confirmed_at)
+        
         if (event === 'SIGNED_IN' && session?.user) {
+          // Email doğrulama kontrolü - eğer email doğrulanmamışsa uyarı ver ama devam et
+          if (!session.user.email_confirmed_at) {
+            console.log('Email doğrulanmamış, ama devam ediliyor...')
+          }
+
           // Kullanıcı bilgilerini veritabanından al veya oluştur
           const { data: userData, error } = await supabase
             .from('yargizeka.users')
@@ -75,7 +82,10 @@ function App() {
             .eq('user_id', session.user.id)
             .single()
 
+          console.log('Veritabanı sorgusu sonucu:', userData, error)
+
           if (error && error.code === 'PGRST116') {
+            console.log('Kullanıcı profili bulunamadı, oluşturuluyor...')
             // Kullanıcı yoksa oluştur - user_metadata'dan bilgileri al
             const metadata = session.user.user_metadata || {}
             const newUser = {
@@ -90,23 +100,34 @@ function App() {
               subscription_tier: 'free'
             }
 
+            console.log('Oluşturulacak kullanıcı:', newUser)
+
             const { data: createdUser, error: createError } = await supabase
               .from('yargizeka.users')
               .insert(newUser)
               .select()
               .single()
 
+            console.log('Kullanıcı oluşturma sonucu:', createdUser, createError)
+
             if (createdUser && !createError) {
               setUser(createdUser)
               setAuthenticated(true)
+              console.log('Kullanıcı store\'a eklendi ve authenticated=true yapıldı')
+            } else {
+              console.error('Kullanıcı oluşturulamadı:', createError)
             }
           } else if (userData && !error) {
             setUser(userData)
             setAuthenticated(true)
+            console.log('Mevcut kullanıcı store\'a eklendi ve authenticated=true yapıldı')
+          } else if (error) {
+            console.error('Veritabanı hatası:', error)
           }
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
           setAuthenticated(false)
+          console.log('Kullanıcı çıkış yaptı')
         }
       }
     )

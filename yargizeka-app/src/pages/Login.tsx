@@ -20,13 +20,35 @@ const Login: React.FC = () => {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
+      
       if (error) throw error
+
+      // Başarılı giriş sonrası kullanıcı profilini çek ve store'u güncelle
+      if (data.user) {
+        console.log('Login başarılı, kullanıcı ID:', data.user.id)
+        // Auth state listener App.tsx'te bu değişikliği yakalayacak
+      }
     } catch (error: any) {
-      setError(error.message || 'Bir hata oluştu')
+      console.error('Login hatası:', error)
+      
+      // Daha kullanıcı dostu hata mesajları
+      let errorMessage = 'Bir hata oluştu'
+      
+      if (error.message === 'Email not confirmed') {
+        errorMessage = 'E-posta adresiniz doğrulanmamış. Lütfen e-postanızı kontrol edin ve doğrulama linkine tıklayın.'
+      } else if (error.message === 'Invalid login credentials') {
+        errorMessage = 'E-posta adresi veya şifre hatalı. Lütfen tekrar deneyin.'
+      } else if (error.message === 'Too many requests') {
+        errorMessage = 'Çok fazla giriş denemesi yaptınız. Lütfen birkaç dakika bekleyin.'
+      } else {
+        errorMessage = error.message || 'Giriş yapılırken bir hata oluştu'
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

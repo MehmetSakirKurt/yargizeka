@@ -74,6 +74,9 @@ ALTER TABLE yargizeka.case_analyses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Kullanıcılar kendi kayıtlarını görebilir" ON yargizeka.users
     FOR SELECT USING (auth.uid() = user_id);
 
+CREATE POLICY "Kullanıcılar kendi kayıtlarını ekleyebilir" ON yargizeka.users
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 CREATE POLICY "Kullanıcılar kendi kayıtlarını güncelleyebilir" ON yargizeka.users
     FOR UPDATE USING (auth.uid() = user_id);
 
