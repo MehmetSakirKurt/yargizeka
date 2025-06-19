@@ -17,7 +17,7 @@ const Layout: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/giris" replace />
+    return <Navigate to="/login" replace />
   }
 
   return (

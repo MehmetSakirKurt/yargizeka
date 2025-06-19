@@ -1,13 +1,12 @@
 import React, { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAppStore } from '../lib/store'
 
-const Giris: React.FC = () => {
+const Login: React.FC = () => {
   const { isAuthenticated } = useAppStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -21,20 +20,11 @@ const Giris: React.FC = () => {
     setError(null)
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (error) throw error
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        })
-        if (error) throw error
-        alert('Kayıt başarılı! Lütfen e-postanızı kontrol edin.')
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (error) throw error
     } catch (error: any) {
       setError(error.message || 'Bir hata oluştu')
     } finally {
@@ -86,19 +76,21 @@ const Giris: React.FC = () => {
             disabled={loading}
             className="auth-submit-btn"
           >
-            {loading ? 'Yükleniyor...' : (isLogin ? 'Giriş Yap' : 'Kayıt Ol')}
+            {loading ? 'Yükleniyor...' : 'Giriş Yap'}
           </button>
+
+          <div className="auth-links">
+            <Link to="/forgot-password" className="auth-link">
+              Şifremi Unuttum
+            </Link>
+          </div>
 
           <div className="auth-toggle">
             <p>
-              {isLogin ? 'Hesabınız yok mu?' : 'Zaten hesabınız var mı?'}
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="auth-toggle-btn"
-              >
-                {isLogin ? 'Kayıt Ol' : 'Giriş Yap'}
-              </button>
+              Hesabınız yok mu?
+              <Link to="/register" className="auth-toggle-btn">
+                Kayıt Ol
+              </Link>
             </p>
           </div>
         </form>
@@ -107,4 +99,4 @@ const Giris: React.FC = () => {
   )
 }
 
-export default Giris
+export default Login

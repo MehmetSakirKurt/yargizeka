@@ -4,7 +4,10 @@ import { supabase } from './lib/supabaseClient'
 import { useAppStore } from './lib/store'
 import Layout from './components/Layout'
 import Anasayfa from './pages/Anasayfa'
-import Giris from './pages/Giris'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import DilekceYazma from './pages/DilekceYazma'
 import DavaAnalizi from './pages/DavaAnalizi'
 import HukukAsistani from './pages/HukukAsistani'
@@ -81,7 +84,11 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/giris" element={<Giris />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/giris" element={<Login />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Anasayfa />} />
           <Route path="dilekce-yazma" element={<DilekceYazma />} />
