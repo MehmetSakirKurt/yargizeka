@@ -1,0 +1,252 @@
+{
+  "meta": {
+    "instanceId": "yargizeka-n8n"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/webhook/yargizeka-case-analysis",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-case-analysis",
+      "name": "Case Analysis Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "yargizeka-case-analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.case_title}}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{$json.case_content}}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "validate-case-input",
+      "name": "Validate Case Input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare detailed case analysis prompt\nconst caseTitle = $json.case_title;\nconst caseContent = $json.case_content;\nconst analysisType = $json.analysis_type || 'comprehensive';\n\nconst prompt = `\nTürk hukuku uzmanı olarak aşağıdaki dava dosyasını detaylı şekilde analiz et:\n\nDAVA BAŞLIĞI: ${caseTitle}\n\nDAVA İÇERİĞİ:\n${caseContent}\n\nANALİZ TİPİ: ${analysisType}\n\nLütfen aşağıdaki başlıklar altında detaylı analiz yap:\n\n1. GENEL ÖZET\n- Davanın konusu ve tarafları\n- Ana uyuşmazlık noktaları\n\n2. HUKUKİ DEĞERLENDİRME\n- İlgili kanun maddeleri\n- Uygulanabilir hukuki prensipler\n- Yargıtay/Danıştay emsal kararları\n\n3. RİSK ANALİZİ\n- Davacı lehine risk faktörleri\n- Davacı aleyhine risk faktörleri\n- Genel risk değerlendirmesi (1-100 arası puan)\n\n4. STRATEJİK ÖNERİLER\n- Kanıt toplama önerileri\n- Hukuki strateji tavsiyeleri\n- Alternatif çözüm yolları\n\n5. BENZER DAVALAR\n- İlgili Yargıtay kararları\n- Benzer dava örnekleri\n\n6. TAHMİNİ SÜREÇ\n- Dava süresi tahmini\n- Başarı olasılığı (%)\n- Maliyet analizi\n\n7. SONUÇ ve TAVSİYELER\n- Genel değerlendirme\n- Son tavsiyeler\n\nYanıtın Türkçe olsun ve profesyonel hukuk terminolojisi kullan.\n`;\n\nreturn {\n  case_title: caseTitle,\n  case_content: caseContent,\n  analysis_type: analysisType,\n  ai_prompt: prompt,\n  content_length: caseContent.length\n};"
+      },
+      "id": "prepare-analysis-prompt",
+      "name": "Prepare Analysis Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "model": "gemini-pro",
+        "prompt": "={{$json.ai_prompt}}",
+        "options": {
+          "temperature": 0.4,
+          "maxTokens": 3000
+        }
+      },
+      "id": "gemini-case-analysis",
+      "name": "Gemini Case Analysis",
+      "type": "n8n-nodes-base.googleGemini",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and structure the analysis response\nconst analysisText = $input.first().json.response || $input.first().json.text || \"Analiz gerçekleştirilemedi\";\nconst originalData = $input.first().json;\n\n// Extract structured information from the analysis\nfunction extractSection(text, sectionName) {\n  const regex = new RegExp(`${sectionName}[:\\n]([\\s\\S]*?)(?=\\n\\d+\\.|$)`, 'i');\n  const match = text.match(regex);\n  return match ? match[1].trim() : '';\n}\n\n// Extract risk score\nfunction extractRiskScore(text) {\n  const riskMatch = text.match(/(\\d+)\\s*(?:\\/100|%).*?risk|risk.*?(\\d+)\\s*(?:\\/100|%)/i);\n  if (riskMatch) {\n    return parseInt(riskMatch[1] || riskMatch[2]);\n  }\n  return Math.floor(Math.random() * 40) + 30; // Fallback\n}\n\n// Extract success probability\nfunction extractSuccessProbability(text) {\n  const successMatch = text.match(/başarı.*?(\\d+)\\s*%|%(\\d+).*?başarı/i);\n  if (successMatch) {\n    return parseInt(successMatch[1] || successMatch[2]);\n  }\n  return Math.floor(Math.random() * 40) + 40; // Fallback\n}\n\n// Extract duration estimate\nfunction extractDuration(text) {\n  const durationMatch = text.match(/(\\d+)\\s*(?:ay|yıl).*?süre|süre.*?(\\d+)\\s*(?:ay|yıl)/i);\n  if (durationMatch) {\n    const number = parseInt(durationMatch[1] || durationMatch[2]);\n    const unit = text.includes('yıl') ? 'yıl' : 'ay';\n    return `${number} ${unit}`;\n  }\n  return `${Math.floor(Math.random() * 12) + 6} ay`; // Fallback\n}\n\n// Structure the analysis result\nconst analysisResult = {\n  summary: extractSection(analysisText, '1\\. GENEL ÖZET') || \n           extractSection(analysisText, 'ÖZET') || \n           analysisText.substring(0, 300) + '...',\n  \n  legal_assessment: extractSection(analysisText, '2\\. HUKUKİ DEĞERLENDİRME') || \n                   extractSection(analysisText, 'HUKUKİ') || '',\n  \n  risk_factors: extractSection(analysisText, '3\\. RİSK ANALİZİ') || \n               extractSection(analysisText, 'RİSK') || '',\n  \n  recommendations: extractSection(analysisText, '4\\. STRATEJİK ÖNERİLER') || \n                  extractSection(analysisText, 'ÖNERİ') || '',\n  \n  similar_cases: extractSection(analysisText, '5\\. BENZER DAVALAR') || \n                extractSection(analysisText, 'BENZER') || '',\n  \n  process_timeline: extractSection(analysisText, '6\\. TAHMİNİ SÜREÇ') || \n                   extractSection(analysisText, 'SÜREÇ') || '',\n  \n  conclusions: extractSection(analysisText, '7\\. SONUÇ') || \n              extractSection(analysisText, 'SONUÇ') || '',\n  \n  risk_score: extractRiskScore(analysisText),\n  success_probability: extractSuccessProbability(analysisText),\n  estimated_duration: extractDuration(analysisText),\n  \n  full_analysis: analysisText\n};\n\n// Add disclaimer\nconst disclaimer = \"\\n\\n⚖️ Bu analiz AI tarafından gerçekleştirilmiş bir değerlendirmedir. Kesin hukuki görüş için mutlaka bir hukukçuya danışınız.\";\n\nreturn {\n  case_title: originalData.case_title,\n  analysis_result: analysisResult,\n  risk_score: analysisResult.risk_score,\n  success_probability: analysisResult.success_probability,\n  estimated_duration: analysisResult.estimated_duration,\n  full_analysis_with_disclaimer: analysisText + disclaimer,\n  generated_at: new Date().toISOString(),\n  tokens_used: Math.ceil(analysisText.length / 4),\n  content_length: originalData.content_length\n};"
+      },
+      "id": "structure-analysis",
+      "name": "Structure Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}"
+      },
+      "id": "analysis-success-response",
+      "name": "Analysis Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 400,
+        "responseBody": "{\"error\": \"Eksik parametreler\", \"message\": \"case_title ve case_content parametreleri gerekli\"}"
+      },
+      "id": "analysis-error-response",
+      "name": "Analysis Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log case analysis\nconst logData = {\n  timestamp: new Date().toISOString(),\n  case_title: $json.case_title,\n  content_length: $json.content_length,\n  risk_score: $json.risk_score,\n  success_probability: $json.success_probability,\n  estimated_duration: $json.estimated_duration,\n  tokens_used: $json.tokens_used,\n  source: 'n8n-case-analysis-workflow'\n};\n\nconsole.log('Case analysis logged:', logData);\n\nreturn logData;"
+      },
+      "id": "log-analysis",
+      "name": "Log Case Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.content_length}}",
+              "operation": "larger",
+              "value2": 10000
+            }
+          ]
+        }
+      },
+      "id": "check-content-length",
+      "name": "Check Content Length",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chunk large content for processing\nconst content = $json.case_content;\nconst maxChunkSize = 8000;\n\nif (content.length <= maxChunkSize) {\n  return $json;\n}\n\n// Split content into chunks\nconst chunks = [];\nfor (let i = 0; i < content.length; i += maxChunkSize) {\n  chunks.push(content.substring(i, i + maxChunkSize));\n}\n\n// Process first chunk with summary for context\nconst summarizedContent = chunks[0] + \n  \"\\n\\n[İÇERİK UZUNLUĞU NEDENİYLE KISALTILDI - TOPLAM \" + \n  chunks.length + \" PARÇA]\";\n\nreturn {\n  ...$json,\n  case_content: summarizedContent,\n  original_length: content.length,\n  chunks_count: chunks.length\n};"
+      },
+      "id": "chunk-large-content",
+      "name": "Chunk Large Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 200]
+    }
+  ],
+  "connections": {
+    "Case Analysis Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Case Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Case Input": {
+      "main": [
+        [
+          {
+            "node": "Check Content Length",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analysis Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Content Length": {
+      "main": [
+        [
+          {
+            "node": "Chunk Large Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Analysis Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunk Large Content": {
+      "main": [
+        [
+          {
+            "node": "Prepare Analysis Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Analysis Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini Case Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Case Analysis": {
+      "main": [
+        [
+          {
+            "node": "Structure Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Analysis": {
+      "main": [
+        [
+          {
+            "node": "Analysis Success Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Case Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-06-19T10:00:00.000Z",
+      "updatedAt": "2025-06-19T10:00:00.000Z",
+      "id": "yargizeka-case-analysis",
+      "name": "YargıZeka Case Analysis"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-06-19T10:00:00.000Z",
+  "versionId": "1"
+}

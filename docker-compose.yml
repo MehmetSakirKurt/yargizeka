@@ -1,0 +1,228 @@
+version: '3.8'
+
+services:
+  # N8N Automation Service
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: yargizeka-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Timezone
+      - GENERIC_TIMEZONE=Europe/Istanbul
+      - TZ=Europe/Istanbul
+      
+      # Basic Authentication
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=yargizeka2025
+      
+      # Server Configuration
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      
+      # Database Configuration
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=n8n-db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=n8n_password
+      
+      # Features
+      - N8N_METRICS=true
+      - N8N_LOG_LEVEL=info
+      - N8N_USER_MANAGEMENT_DISABLED=false
+      - N8N_PERSONALIZATION_ENABLED=true
+      
+      # Security
+      - N8N_ENCRYPTION_KEY=yargizeka-n8n-encryption-key-2025
+      
+      # Execution
+      - EXECUTIONS_PROCESS=main
+      - EXECUTIONS_MODE=regular
+      - EXECUTIONS_TIMEOUT=3600
+      - EXECUTIONS_MAX_TIMEOUT=3600
+      
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n-workflows:/home/node/.n8n/workflows:ro
+    networks:
+      - yargizeka-network
+    depends_on:
+      - n8n-db
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Database for N8N
+  n8n-db:
+    image: postgres:13-alpine
+    container_name: yargizeka-n8n-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=n8n_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - n8n_db_data:/var/lib/postgresql/data
+    networks:
+      - yargizeka-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n -d n8n"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for Caching and Queue Management
+  redis:
+    image: redis:7-alpine
+    container_name: yargizeka-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass yargizeka_redis_2025
+    volumes:
+      - redis_data:/data
+    networks:
+      - yargizeka-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Milvus Vector Database (Optional - for semantic search)
+  milvus-standalone:
+    image: milvusdb/milvus:v2.3.0
+    container_name: yargizeka-milvus
+    restart: unless-stopped
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    environment:
+      - ETCD_ENDPOINTS=etcd:2379
+      - MINIO_ADDRESS=minio:9000
+    volumes:
+      - milvus_data:/var/lib/milvus
+    networks:
+      - yargizeka-network
+    depends_on:
+      - etcd
+      - minio
+
+  # Etcd for Milvus
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: yargizeka-etcd
+    restart: unless-stopped
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd_data:/etcd
+    networks:
+      - yargizeka-network
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+
+  # MinIO for Milvus
+  minio:
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    container_name: yargizeka-minio
+    restart: unless-stopped
+    ports:
+      - "9001:9001"
+    environment:
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    volumes:
+      - minio_data:/data
+    networks:
+      - yargizeka-network
+    command: minio server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: yargizeka-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - yargizeka-network
+    depends_on:
+      - n8n
+
+  # Prometheus for Monitoring (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: yargizeka-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - yargizeka-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+
+  # Grafana for Dashboards (Optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: yargizeka-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=yargizeka_grafana_2025
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - yargizeka-network
+
+volumes:
+  n8n_data:
+    driver: local
+  n8n_db_data:
+    driver: local
+  redis_data:
+    driver: local
+  milvus_data:
+    driver: local
+  etcd_data:
+    driver: local
+  minio_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  yargizeka-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,198 @@
+{
+  "meta": {
+    "instanceId": "yargizeka-n8n"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/webhook/yargizeka-legal-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-legal-search",
+      "name": "Legal Search Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "yargizeka-legal-search"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.search_query}}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "validate-search-input",
+      "name": "Validate Search Input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process search query and filters\nconst searchQuery = $json.search_query;\nconst filters = $json.filters || {};\nconst resultLimit = $json.limit || 10;\n\n// Create embedding prompt for semantic search\nconst embeddingPrompt = `\nArama terimi: \"${searchQuery}\"\n\nBu arama terimini Türk hukuku bağlamında genişlet ve ilgili anahtar kelimeleri oluştur.\nYargıtay ve Danıştay kararlarında bu konuyla ilgili aranabilecek terimler:\n`;\n\n// Prepare search context\nconst searchContext = {\n  original_query: searchQuery,\n  court_type: filters.court_type || 'all',\n  date_range: filters.date_range || 'all',\n  case_type: filters.case_type || 'all',\n  result_limit: resultLimit,\n  semantic_expansion: true\n};\n\nreturn {\n  search_query: searchQuery,\n  filters: filters,\n  embedding_prompt: embeddingPrompt,\n  search_context: searchContext,\n  result_limit: resultLimit\n};"
+      },
+      "id": "process-search-query",
+      "name": "Process Search Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "model": "gemini-pro",
+        "prompt": "={{$json.embedding_prompt}}",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 500
+        }
+      },
+      "id": "generate-search-terms",
+      "name": "Generate Search Terms",
+      "type": "n8n-nodes-base.googleGemini",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Simulate Milvus vector database search\n// In real implementation, this would connect to actual Milvus instance\n\nconst originalQuery = $input.first().json.search_query;\nconst expandedTerms = $input.first().json.response || '';\nconst filters = $input.first().json.filters;\nconst resultLimit = $input.first().json.result_limit;\n\n// Mock legal decision database\nconst mockLegalDecisions = [\n  {\n    id: 'yargitay-2023-12345',\n    title: 'Tazminat Davası - Manevi Tazminat Hesaplaması',\n    court: 'Yargıtay 4. Hukuk Dairesi',\n    date: '2023-11-15',\n    case_number: '2023/12345',\n    case_type: 'hukuk',\n    summary: 'Trafik kazası sonucu yaralanan davacının manevi tazminat talebinin değerlendirilmesi.',\n    content: 'Bu davada, trafik kazası sonucu yaralanan davacının manevi tazminat miktarının belirlenmesi söz konusudur. Mahkeme, kazanın ağırlığı, davacının yaşı ve sosyal durumu gibi faktörleri değerlendirmiştir. TMK 58. madde kapsamında manevi tazminat miktarı 15.000 TL olarak belirlenmiştir.',\n    keywords: ['tazminat', 'manevi', 'trafik kazası', 'TMK 58'],\n    relevance_score: 0.95\n  },\n  {\n    id: 'yargitay-2023-67890',\n    title: 'İş Kazası Tazminat Davası - İşveren Sorumluluğu',\n    court: 'Yargıtay 21. Hukuk Dairesi',\n    date: '2023-10-22',\n    case_number: '2023/67890',\n    case_type: 'hukuk',\n    summary: 'İşveren sorumluluğu kapsamında iş kazası tazminatı hesaplaması.',\n    content: 'İş kazası sonucu meydana gelen yaralanma nedeniyle açılan tazminat davasında, işverenin İSG yükümlülüklerini yerine getirmediği tespit edilmiştir. 5510 sayılı Kanun kapsamında işverenin kusurlu olduğu hallerde ek tazminat ödenmesi gerekmektedir.',\n    keywords: ['iş kazası', 'işveren sorumluluğu', 'tazminat', '5510 sayılı kanun'],\n    relevance_score: 0.87\n  },\n  {\n    id: 'yargitay-2023-34567',\n    title: 'Kira Artış Oranı Uyuşmazlığı',\n    court: 'Yargıtay 6. Hukuk Dairesi',\n    date: '2023-09-30',\n    case_number: '2023/34567',\n    case_type: 'hukuk',\n    summary: 'Kira artış oranlarının belirlenmesi ve uygulanmasına ilişkin karar.',\n    content: 'Kiraya verenin, yasal sınırları aşan kira artışı talebine karşı kiracının açtığı tespit davası. 6098 sayılı TBK 344. madde gereğince kira artış oranı TÜFE artış oranını geçemez. Mahkeme fazla alınan kira bedelinin iadesine karar vermiştir.',\n    keywords: ['kira artışı', 'TBK 344', 'TÜFE', 'kira bedeli'],\n    relevance_score: 0.73\n  },\n  {\n    id: 'danistay-2023-11111',\n    title: 'İdari Para Cezası İptali',\n    court: 'Danıştay 15. Dairesi',\n    date: '2023-08-15',\n    case_number: '2023/11111',\n    case_type: 'idari',\n    summary: 'Vergi dairesince kesilen idari para cezasının iptali davası.',\n    content: 'Mükelleflerin beyanname verme süresini geçirmesi nedeniyle kesilen idari para cezasının, mücbir sebep koşullarının varlığı halinde iptal edilmesi gerektiği belirtilmiştir. VUK 341. madde kapsamında değerlendirme yapılmıştır.',\n    keywords: ['idari para cezası', 'VUK 341', 'mücbir sebep', 'beyanname'],\n    relevance_score: 0.65\n  },\n  {\n    id: 'yargitay-2023-55555',\n    title: 'Boşanma Davası - Maddi Manevi Tazminat',\n    court: 'Yargıtay 2. Hukuk Dairesi',\n    date: '2023-07-20',\n    case_number: '2023/55555',\n    case_type: 'hukuk',\n    summary: 'Boşanma davası sonrası maddi ve manevi tazminat talebi.',\n    content: 'Boşanma davası neticesinde kusurlu eşten maddi ve manevi tazminat talep edilmiştir. TMK 174. madde gereğince kusurlu eşin diğer eşe tazminat ödemesi gerekmektedir. Mahkeme 25.000 TL manevi tazminat ödemesine karar vermiştir.',\n    keywords: ['boşanma', 'tazminat', 'TMK 174', 'kusurlu eş'],\n    relevance_score: 0.80\n  },\n  {\n    id: 'yargitay-2023-99999',\n    title: 'İcra İflas - Haciz İtirazı',\n    court: 'Yargıtay 12. Hukuk Dairesi',\n    date: '2023-06-10',\n    case_number: '2023/99999',\n    case_type: 'icra',\n    summary: 'Haczedilen malın borçluya ait olmadığı iddiasıyla açılan itiraz davası.',\n    content: 'Borçlunun eşine ait olduğu iddia edilen taşınmaz üzerine konulan hacze itiraz davası. İİK 96. madde kapsamında üçüncü kişinin mülkiyetinde olan malların haczedilemeyeceği belirtilmiştir.',\n    keywords: ['haciz itirazı', 'İİK 96', 'üçüncü kişi', 'mülkiyet'],\n    relevance_score: 0.70\n  }\n];\n\n// Filter results based on search query and filters\nlet filteredResults = mockLegalDecisions.filter(decision => {\n  // Text search\n  const queryLower = originalQuery.toLowerCase();\n  const titleMatch = decision.title.toLowerCase().includes(queryLower);\n  const summaryMatch = decision.summary.toLowerCase().includes(queryLower);\n  const contentMatch = decision.content.toLowerCase().includes(queryLower);\n  const keywordMatch = decision.keywords.some(keyword => \n    keyword.toLowerCase().includes(queryLower) || \n    queryLower.includes(keyword.toLowerCase())\n  );\n  \n  const textMatch = titleMatch || summaryMatch || contentMatch || keywordMatch;\n  \n  // Filter by court type\n  let courtMatch = true;\n  if (filters.court_type && filters.court_type !== 'all' && filters.court_type !== '') {\n    if (filters.court_type === 'yargitay') {\n      courtMatch = decision.court.toLowerCase().includes('yargıtay');\n    } else if (filters.court_type === 'danistay') {\n      courtMatch = decision.court.toLowerCase().includes('danıştay');\n    }\n  }\n  \n  // Filter by case type\n  let caseTypeMatch = true;\n  if (filters.case_type && filters.case_type !== 'all' && filters.case_type !== '') {\n    caseTypeMatch = decision.case_type === filters.case_type;\n  }\n  \n  // Filter by date\n  let dateMatch = true;\n  if (filters.date_range && filters.date_range !== 'all' && filters.date_range !== '') {\n    const decisionYear = new Date(decision.date).getFullYear().toString();\n    dateMatch = decisionYear === filters.date_range;\n  }\n  \n  return textMatch && courtMatch && caseTypeMatch && dateMatch;\n});\n\n// Sort by relevance score and limit results\nfilteredResults = filteredResults\n  .sort((a, b) => b.relevance_score - a.relevance_score)\n  .slice(0, resultLimit);\n\n// Update relevance scores based on query match quality\nfilteredResults = filteredResults.map(result => {\n  const queryLower = originalQuery.toLowerCase();\n  let bonusScore = 0;\n  \n  if (result.title.toLowerCase().includes(queryLower)) bonusScore += 0.1;\n  if (result.keywords.some(k => k.toLowerCase() === queryLower)) bonusScore += 0.15;\n  \n  return {\n    ...result,\n    relevance_score: Math.min(1.0, result.relevance_score + bonusScore)\n  };\n});\n\nreturn {\n  search_query: originalQuery,\n  expanded_terms: expandedTerms,\n  filters: filters,\n  results: filteredResults,\n  total_found: filteredResults.length,\n  search_timestamp: new Date().toISOString()\n};"
+      },
+      "id": "perform-vector-search",
+      "name": "Perform Vector Search",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}"
+      },
+      "id": "search-success-response",
+      "name": "Search Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 400,
+        "responseBody": "{\"error\": \"Eksik arama terimi\", \"message\": \"search_query parametresi gerekli\"}"
+      },
+      "id": "search-error-response",
+      "name": "Search Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log search activity\nconst logData = {\n  timestamp: new Date().toISOString(),\n  search_query: $json.search_query,\n  expanded_terms: $json.expanded_terms.substring(0, 200) + '...',\n  filters: $json.filters,\n  results_count: $json.total_found,\n  search_duration: 'simulated',\n  source: 'n8n-legal-search-workflow'\n};\n\nconsole.log('Legal search logged:', logData);\n\nreturn logData;"
+      },
+      "id": "log-search",
+      "name": "Log Search Activity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.total_found}}",
+              "operation": "equal",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "check-search-results",
+      "name": "Check Search Results",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate suggestions for no results\nconst originalQuery = $json.search_query;\n\nconst suggestions = [\n  'Daha genel terimler kullanmayı deneyin',\n  'Farklı anahtar kelimeler deneyin',\n  'Filtreleri kaldırarak tüm sonuçlara bakın',\n  'Yazım hatalarını kontrol edin',\n  'Eş anlamlı kelimeler kullanın'\n];\n\nconst alternativeTerms = {\n  'tazminat': ['zarar', 'bedel', 'ödeme', 'giderim'],\n  'kira': ['kira bedeli', 'ücret', 'ecrimisil'],\n  'boşanma': ['evliliğin sona ermesi', 'ayrılık'],\n  'iş': ['çalışma', 'istihdam', 'emek'],\n  'ceza': ['müeyyide', 'yaptırım', 'adli']\n};\n\nlet suggestedTerms = [];\nfor (const [key, alternatives] of Object.entries(alternativeTerms)) {\n  if (originalQuery.toLowerCase().includes(key)) {\n    suggestedTerms = suggestedTerms.concat(alternatives);\n  }\n}\n\nreturn {\n  ...$json,\n  no_results: true,\n  suggestions: suggestions,\n  alternative_terms: suggestedTerms.slice(0, 5),\n  message: `\"${originalQuery}\" için sonuç bulunamadı. Alternatif arama terimleri deneyebilirsiniz.`\n};"
+      },
+      "id": "generate-suggestions",
+      "name": "Generate Search Suggestions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 700]
+    }
+  ],
+  "connections": {
+    "Legal Search Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Search Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Search Input": {
+      "main": [
+        [
+          {
+            "node": "Process Search Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Search Query": {
+      "main": [
+        [
+          {
+            "node": "Generate Search Terms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Search Terms": {
+      "main": [
+        [
+          {
+            "node": "Perform Vector Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perform Vector Search": {
+      "main": [
+        [
+          {
+            "node": "Check Search Results",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Success Response",
+            "type": "main",
+            "index": 0
+          },\n          {\n            \"node\": \"Log Search Activity\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Check Search Results\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Generate Search Suggestions\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Generate Search Suggestions\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Search Success Response\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    }\n  },\n  \"pinData\": {},\n  \"settings\": {\n    \"executionOrder\": \"v1\"\n  },\n  \"staticData\": null,\n  \"tags\": [\n    {\n      \"createdAt\": \"2025-06-19T10:00:00.000Z\",\n      \"updatedAt\": \"2025-06-19T10:00:00.000Z\",\n      \"id\": \"yargizeka-legal-search\",\n      \"name\": \"YargıZeka Legal Search\"\n    }\n  ],\n  \"triggerCount\": 1,\n  \"updatedAt\": \"2025-06-19T10:00:00.000Z\",\n  \"versionId\": \"1\"\n}
