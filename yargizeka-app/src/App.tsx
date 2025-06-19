@@ -95,6 +95,7 @@ function App() {
         console.log('Auth state değişti:', event, session?.user?.email, session?.user?.email_confirmed_at)
         
         if (event === 'SIGNED_IN' && session?.user) {
+          console.log('SIGNED_IN event işleniyor, user ID:', session.user.id)
           setLoading(true)
           
           try {
@@ -103,6 +104,22 @@ function App() {
               console.log('Email doğrulanmamış, ama devam ediliyor...')
             }
 
+            console.log('Veritabanından kullanıcı bilgileri sorgulanıyor...')
+            
+            // Önce veritabanı bağlantısını test et
+            const { data: testData, error: testError } = await supabase
+              .from('yargizeka.users')
+              .select('count')
+              .limit(1)
+            
+            console.log('Veritabanı bağlantı testi:', testData, testError)
+            
+            if (testError) {
+              console.error('Veritabanı bağlantısı başarısız:', testError)
+              setAuthState(null, false)
+              return
+            }
+            
             // Kullanıcı bilgilerini veritabanından al veya oluştur
             const { data: userData, error } = await supabase
               .from('yargizeka.users')
