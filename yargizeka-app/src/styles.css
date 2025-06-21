@@ -47,6 +47,148 @@ body {
   --warning: #ed8936;
   --error: #e53e3e;
   --info: #3182ce;
+}
+
+/* Logo Stilleri */
+.sidebar-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.sidebar-logo-image {
+  max-width: 120px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.auth-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.auth-logo-image {
+  max-width: 150px;
+  max-height: 80px;
+  object-fit: contain;
+}
+
+/* Header Dropdown Stilleri */
+.header-action-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--error);
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 280px;
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--gray-50);
+}
+
+.dropdown-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin: 0;
+}
+
+.dropdown-content {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background: var(--gray-50);
+}
+
+.dropdown-divider {
+  border: none;
+  border-top: 1px solid var(--gray-100);
+  margin: 0.5rem 0;
+}
+
+/* Bildirim Öğeleri */
+.notification-item {
+  padding: 1rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gray-800);
+  margin-bottom: 0.25rem;
+}
+
+.notification-text {
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  margin-bottom: 0.25rem;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
   
   /* Gölgeler */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);

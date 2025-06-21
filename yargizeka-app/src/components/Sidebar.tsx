@@ -22,6 +22,17 @@ const Sidebar: React.FC = () => {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
+        <div className="sidebar-logo">
+          <img 
+            src="/logo.png" 
+            alt="YargıZeka Logo" 
+            className="sidebar-logo-image"
+            onError={(e) => {
+              // Logo bulunamazsa gizle ve sadece text göster
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
         <h1 className="sidebar-title">YargıZeka</h1>
         <p className="sidebar-subtitle">Hukuk Asistanınız</p>
       </div>
