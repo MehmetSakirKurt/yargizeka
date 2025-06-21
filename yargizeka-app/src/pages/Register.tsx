@@ -93,16 +93,24 @@ const Register: React.FC = () => {
 
       if (authError) throw authError
 
+      console.log('📧 Auth data:', { 
+        user: !!authData.user, 
+        emailConfirmed: authData.user?.email_confirmed_at,
+        email: authData.user?.email 
+      })
+
       if (authData.user && !authData.user.email_confirmed_at) {
         // Email confirmation gerekiyorsa verification sayfasına yönlendir
+        setSuccess('Kayıt başarılı! E-posta doğrulama sayfasına yönlendiriliyorsunuz...')
         setTimeout(() => {
           navigate('/email-verification')
         }, 2000)
-        setSuccess('Kayıt başarılı! E-posta doğrulama sayfasına yönlendiriliyorsunuz...')
       } else if (authData.user) {
-        // Email confirmation gerektirmiyorsa direkt profil oluştur
-        await createUserProfile(authData.user.id)
-        setSuccess('Kayıt başarılı! Hesabınız oluşturuldu, giriş yapabilirsiniz.')
+        // Email confirmation gerektirmiyorsa direkt giriş yapabilir
+        setSuccess('Kayıt başarılı! Hesabınız oluşturuldu. Şimdi giriş yapabilirsiniz.')
+        setTimeout(() => {
+          navigate('/login')
+        }, 2000)
       }
       
       // Formu temizle

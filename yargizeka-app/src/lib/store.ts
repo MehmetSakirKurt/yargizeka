@@ -45,14 +45,23 @@ export const useAppStore = create<AppState>((set) => ({
   chatMessages: [],
   
   // Actions
-  setUser: (user) => set({ user }),
-  setAuthenticated: (authenticated) => set({ isAuthenticated: authenticated }),
-  setAuthState: (user: User | null, authenticated: boolean) => set({ 
-    user, 
-    isAuthenticated: authenticated 
-  }),
+  setUser: (user) => {
+    console.log('🏪 Store setUser:', user?.email || 'null')
+    set({ user })
+  },
+  setAuthenticated: (authenticated) => {
+    console.log('🏪 Store setAuthenticated:', authenticated)
+    set({ isAuthenticated: authenticated })
+  },
+  setAuthState: (user: User | null, authenticated: boolean) => {
+    console.log('🏪 Store setAuthState:', { userEmail: user?.email || 'null', authenticated })
+    set({ user, isAuthenticated: authenticated })
+  },
   setCurrentPage: (page) => set({ currentPage: page }),
-  setLoading: (loading) => set({ isLoading: loading }),
+  setLoading: (loading) => {
+    console.log('🏪 Store setLoading:', loading)
+    set({ isLoading: loading })
+  },
   setError: (error) => set({ error }),
   addChatMessage: (message) => set((state) => ({ 
     chatMessages: [...state.chatMessages, message] 

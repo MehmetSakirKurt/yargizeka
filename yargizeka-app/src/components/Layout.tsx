@@ -7,27 +7,32 @@ import Header from './Header'
 const Layout: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAppStore()
 
-  console.log('🖥️ Layout render - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'user:', !!user)
+  console.log('🖥️ Layout render:', {
+    isAuthenticated,
+    isLoading, 
+    hasUser: !!user,
+    userEmail: user?.email
+  })
 
   if (isLoading) {
-    console.log('⏳ Layout: Loading gösteriliyor')
+    console.log('⏳ Layout: Loading ekranı gösteriliyor')
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
         <p>YargıZeka Yükleniyor...</p>
         <small style={{ marginTop: '1rem', opacity: 0.7, fontSize: '0.9rem' }}>
-          Kullanıcı doğrulanıyor
+          Kullanıcı doğrulanıyor...
         </small>
       </div>
     )
   }
 
   if (!isAuthenticated) {
-    console.log('🚫 Layout: Authenticated değil, login\'e yönlendiriliyor')
+    console.log('🚫 Layout: Giriş yapmamış, login sayfasına yönlendiriliyor')
     return <Navigate to="/login" replace />
   }
 
-  console.log('✅ Layout: Ana sayfa gösteriliyor')
+  console.log('✅ Layout: Ana layout gösteriliyor')
 
   return (
     <div className="app-layout">

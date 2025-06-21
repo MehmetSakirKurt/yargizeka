@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
+import { Mail, ArrowLeft, Shield, ArrowRight } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAppStore } from '../lib/store'
 
@@ -37,56 +38,81 @@ const ForgotPassword: React.FC = () => {
   }
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1 className="auth-title">Şifremi Unuttum</h1>
-          <p className="auth-subtitle">E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim</p>
+    <div className="modern-auth-container">
+      <div className="modern-auth-card">
+        {/* Header */}
+        <div className="modern-auth-header">
+          <div className="brand-section">
+            <div className="brand-icon">
+              <Shield size={32} />
+            </div>
+            <h1 className="brand-title">YargıZeka</h1>
+          </div>
+          <p className="brand-subtitle">Şifrenizi sıfırlayın</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">E-posta</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="form-input"
-              placeholder="E-posta adresinizi girin"
-              required
-            />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="modern-auth-form">
+          <div className="form-section">
+            <h2 className="form-title">Şifre Sıfırlama</h2>
+            <p className="form-subtitle">E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim</p>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="email" className="modern-label">E-posta Adresi</label>
+            <div className="input-wrapper">
+              <Mail className="input-icon" size={20} />
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="modern-input"
+                placeholder="ornek@email.com"
+                required
+              />
+            </div>
           </div>
 
           {error && (
-            <div className="error-message">
-              {error}
+            <div className="modern-error">
+              <div className="error-content">
+                <span className="error-icon">⚠️</span>
+                <span>{error}</span>
+              </div>
             </div>
           )}
 
           {success && (
-            <div className="success-message">
-              {success}
+            <div className="modern-success">
+              <div className="success-content">
+                <span className="success-icon">✅</span>
+                <span>{success}</span>
+              </div>
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="auth-submit-btn"
+            className="modern-submit-btn"
           >
-            {loading ? 'Yükleniyor...' : 'Şifre Sıfırlama Bağlantısı Gönder'}
+            <span>{loading ? 'Gönderiliyor...' : 'Şifre Sıfırlama Bağlantısı Gönder'}</span>
+            {!loading && <ArrowRight size={20} />}
           </button>
 
-          <div className="auth-toggle">
-            <p>
-              Şifrenizi hatırladınız mı?
-              <Link to="/login" className="auth-toggle-btn">
-                Giriş Yap
-              </Link>
-            </p>
+          <div className="auth-footer">
+            <Link to="/login" className="modern-back-link">
+              <ArrowLeft size={16} />
+              <span>Giriş sayfasına dön</span>
+            </Link>
           </div>
         </form>
+      </div>
+
+      {/* Background Design */}
+      <div className="auth-background">
+        <div className="bg-pattern"></div>
       </div>
     </div>
   )

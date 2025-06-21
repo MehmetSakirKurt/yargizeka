@@ -5,14 +5,17 @@ import { supabase } from '../lib/supabaseClient'
 import { useAppStore } from '../lib/store'
 
 const Login: React.FC = () => {
-  const { isAuthenticated } = useAppStore()
+  const { isAuthenticated, user } = useAppStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  console.log('🔐 Login sayfa render:', { isAuthenticated, hasUser: !!user })
+
   if (isAuthenticated) {
+    console.log('✅ Login: Zaten giriş yapmış, ana sayfaya yönlendiriliyor')
     return <Navigate to="/" replace />
   }
 
@@ -30,9 +33,12 @@ const Login: React.FC = () => {
       if (error) throw error
 
       if (data.user) {
-        console.log('Login başarılı')
+        console.log('🎉 Login başarılı, user:', data.user.email)
+        // Auth state otomatik olarak App.tsx'deki onAuthStateChange ile handle edilecek
+        // Bu yüzden manual olarak setLoading(false) yapmıyoruz
       }
     } catch (error: any) {
+      console.error('❌ Login hatası:', error)
       let errorMessage = 'Giriş yapılamadı'
       
       if (error.message?.includes('Invalid login credentials')) {

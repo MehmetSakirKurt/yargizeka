@@ -19,30 +19,26 @@ function App() {
   const { setUser, setAuthenticated, setLoading } = useAppStore()
 
   useEffect(() => {
+    console.log('🚀 App useEffect başladı')
     setLoading(true)
 
     // Auth state değişikliklerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔑 Auth event:', event, session?.user?.email || 'no user')
+        console.log('🔑 Auth event:', event, 'User:', session?.user?.email || 'no user')
         
-        if (event === 'INITIAL_SESSION') {
+        try {
           if (session?.user) {
-            console.log('✅ Session var, kullanıcı giriş yapmış')
+            console.log('👤 Kullanıcı var, profil yükleniyor...')
             await loadUserProfile(session.user)
           } else {
-            console.log('❌ Session yok')
+            console.log('❌ Kullanıcı yok, logout state')
             setUser(null)
             setAuthenticated(false)
             setLoading(false)
           }
-        } else if (event === 'SIGNED_IN' && session?.user) {
-          console.log('🎉 Yeni giriş!')
-          await loadUserProfile(session.user)
-        } else if (event === 'SIGNED_OUT') {
-          console.log('👋 Çıkış yapıldı')
-          setUser(null)
-          setAuthenticated(false)
+        } catch (error) {
+          console.error('❌ Auth event error:', error)
           setLoading(false)
         }
       }
@@ -50,60 +46,33 @@ function App() {
 
     // Kullanıcı profilini yükle
     const loadUserProfile = async (authUser: any) => {
+      console.log('📡 Profil yükleniyor:', authUser.email)
+      
       try {
-        // Database'den kullanıcı profilini al
-        const { data: userProfile, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('user_id', authUser.id)
-          .single()
-
-        if (userProfile && !error) {
-          // Profil bulundu
-          console.log('👤 Kullanıcı profili yüklendi:', userProfile)
-          setUser(userProfile)
-          setAuthenticated(true)
-          console.log('✅ setAuthenticated(true) çalıştırıldı')
-        } else {
-          // Profil yok, basit profil oluştur
-          console.log('🆕 Basit profil oluşturuluyor, hata:', error)
-          const simpleProfile = {
-            user_id: authUser.id,
-            email: authUser.email || '',
-            first_name: '',
-            last_name: '',
-            profession: '',
-            bar_association: null,
-            phone: null,
-            city: null,
-            subscription_tier: 'free'
-          }
-          
-          console.log('📝 Basit profil oluşturuldu:', simpleProfile)
-          setUser(simpleProfile)
-          setAuthenticated(true)
-          console.log('✅ setAuthenticated(true) çalıştırıldı')
-        }
-      } catch (error) {
-        console.error('❌ Profil yükleme hatası:', error)
-        // Hata olsa bile giriş yapmış sayalım
-        const fallbackProfile = {
+        // Basit profil oluştur - Database sorgulamayı atlayalım test için
+        const userProfile = {
           user_id: authUser.id,
           email: authUser.email || '',
-          first_name: '',
-          last_name: '',
-          profession: '',
-          bar_association: null,
-          phone: null,
-          city: null,
+          first_name: authUser.user_metadata?.first_name || '',
+          last_name: authUser.user_metadata?.last_name || '',
+          profession: authUser.user_metadata?.profession || '',
+          bar_association: authUser.user_metadata?.bar_association || null,
+          phone: authUser.user_metadata?.phone || null,
+          city: authUser.user_metadata?.city || null,
           subscription_tier: 'free'
         }
-        console.log('🔄 Fallback profil oluşturuldu:', fallbackProfile)
-        setUser(fallbackProfile)
+        
+        console.log('✅ Profil hazırlandı:', userProfile.email)
+        
+        // State'i güncelle
+        setUser(userProfile)
         setAuthenticated(true)
-        console.log('✅ setAuthenticated(true) çalıştırıldı (fallback)')
-      } finally {
-        console.log('🏁 setLoading(false) çalıştırıldı')
+        setLoading(false)
+        
+        console.log('🎯 Auth state güncellendi - isAuthenticated: true, isLoading: false')
+        
+      } catch (error) {
+        console.error('❌ Profil yükleme hatası:', error)
         setLoading(false)
       }
     }
