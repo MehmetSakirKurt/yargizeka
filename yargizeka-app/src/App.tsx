@@ -60,12 +60,13 @@ function App() {
 
         if (userProfile && !error) {
           // Profil bulundu
-          console.log('👤 Kullanıcı profili yüklendi')
+          console.log('👤 Kullanıcı profili yüklendi:', userProfile)
           setUser(userProfile)
           setAuthenticated(true)
+          console.log('✅ setAuthenticated(true) çalıştırıldı')
         } else {
           // Profil yok, basit profil oluştur
-          console.log('🆕 Basit profil oluşturuluyor')
+          console.log('🆕 Basit profil oluşturuluyor, hata:', error)
           const simpleProfile = {
             user_id: authUser.id,
             email: authUser.email || '',
@@ -78,13 +79,15 @@ function App() {
             subscription_tier: 'free'
           }
           
+          console.log('📝 Basit profil oluşturuldu:', simpleProfile)
           setUser(simpleProfile)
           setAuthenticated(true)
+          console.log('✅ setAuthenticated(true) çalıştırıldı')
         }
       } catch (error) {
         console.error('❌ Profil yükleme hatası:', error)
         // Hata olsa bile giriş yapmış sayalım
-        setUser({
+        const fallbackProfile = {
           user_id: authUser.id,
           email: authUser.email || '',
           first_name: '',
@@ -94,9 +97,13 @@ function App() {
           phone: null,
           city: null,
           subscription_tier: 'free'
-        })
+        }
+        console.log('🔄 Fallback profil oluşturuldu:', fallbackProfile)
+        setUser(fallbackProfile)
         setAuthenticated(true)
+        console.log('✅ setAuthenticated(true) çalıştırıldı (fallback)')
       } finally {
+        console.log('🏁 setLoading(false) çalıştırıldı')
         setLoading(false)
       }
     }

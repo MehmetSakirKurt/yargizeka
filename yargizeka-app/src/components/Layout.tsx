@@ -5,9 +5,12 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 
 const Layout: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAppStore()
+  const { isAuthenticated, isLoading, user } = useAppStore()
+
+  console.log('🖥️ Layout render - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'user:', !!user)
 
   if (isLoading) {
+    console.log('⏳ Layout: Loading gösteriliyor')
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -20,8 +23,11 @@ const Layout: React.FC = () => {
   }
 
   if (!isAuthenticated) {
+    console.log('🚫 Layout: Authenticated değil, login\'e yönlendiriliyor')
     return <Navigate to="/login" replace />
   }
+
+  console.log('✅ Layout: Ana sayfa gösteriliyor')
 
   return (
     <div className="app-layout">
