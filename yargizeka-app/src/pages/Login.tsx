@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAppStore } from '../lib/store'
 
@@ -7,6 +8,7 @@ const Login: React.FC = () => {
   const { isAuthenticated } = useAppStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -20,24 +22,17 @@ const Login: React.FC = () => {
     setError(null)
 
     try {
-      console.log('Giriş yapılıyor...')
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       
-      if (error) {
-        console.error('Auth error:', error)
-        throw error
-      }
+      if (error) throw error
 
       if (data.user) {
-        console.log('Login başarılı, kullanıcı:', data.user.email)
-        // Auth state listener otomatik olarak yakalar, sadece bekle
+        console.log('Login başarılı')
       }
     } catch (error: any) {
-      console.error('Login hatası:', error)
-      
       let errorMessage = 'Giriş yapılamadı'
       
       if (error.message?.includes('Invalid login credentials')) {
@@ -51,71 +46,126 @@ const Login: React.FC = () => {
       setError(errorMessage)
       setLoading(false)
     }
-    // Not: setLoading(false) işlemini App.tsx'teki auth listener yapacak
   }
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1 className="auth-title">YargıZeka</h1>
-          <p className="auth-subtitle">Hukuk Profesyonelleri için AI Destekli Platform</p>
+    <div className="modern-auth-container">
+      <div className="modern-auth-card">
+        {/* Header */}
+        <div className="modern-auth-header">
+          <div className="brand-section">
+            <div className="brand-icon">
+              <Shield size={32} />
+            </div>
+            <h1 className="brand-title">YargıZeka</h1>
+          </div>
+          <p className="brand-subtitle">Hukuk dünyasının AI destekli geleceği</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">E-posta</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="form-input"
-              required
-            />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="modern-auth-form">
+          <div className="form-section">
+            <h2 className="form-title">Hesabınıza Giriş Yapın</h2>
+            <p className="form-subtitle">Hukuki işlerinizi AI ile hızlandırın</p>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">Şifre</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="form-input"
-              required
-            />
+          <div className="input-group">
+            <label htmlFor="email" className="modern-label">E-posta Adresi</label>
+            <div className="input-wrapper">
+              <Mail className="input-icon" size={20} />
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="modern-input"
+                placeholder="ornek@email.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="password" className="modern-label">Şifre</label>
+            <div className="input-wrapper">
+              <Lock className="input-icon" size={20} />
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="modern-input"
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="password-toggle"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           {error && (
-            <div className="error-message">
-              {error}
+            <div className="modern-error">
+              <div className="error-content">
+                <span className="error-icon">⚠️</span>
+                <span>{error}</span>
+              </div>
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="auth-submit-btn"
+            className="modern-submit-btn"
           >
-            {loading ? 'Yükleniyor...' : 'Giriş Yap'}
+            <span>{loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}</span>
+            {!loading && <ArrowRight size={20} />}
           </button>
 
-          <div className="auth-links">
-            <Link to="/forgot-password" className="auth-link">
-              Şifremi Unuttum
-            </Link>
+          <div className="auth-divider">
+            <span>veya</span>
           </div>
 
-          <div className="auth-toggle">
-            <p>
-              Hesabınız yok mu?
-              <Link to="/register" className="auth-toggle-btn">
-                Kayıt Ol
+          <div className="auth-footer">
+            <Link to="/forgot-password" className="modern-link">
+              Şifrenizi mi unuttunuz?
+            </Link>
+            
+            <div className="signup-section">
+              <span>Hesabınız yok mu? </span>
+              <Link to="/register" className="signup-link">
+                Hemen Kayıt Olun
               </Link>
-            </p>
+            </div>
           </div>
         </form>
+
+        {/* Footer */}
+        <div className="auth-card-footer">
+          <div className="feature-list">
+            <div className="feature-item">
+              <span>🤖</span>
+              <span>AI Destekli Dilekçe</span>
+            </div>
+            <div className="feature-item">
+              <span>⚡</span>
+              <span>Hızlı Dava Analizi</span>
+            </div>
+            <div className="feature-item">
+              <span>🔍</span>
+              <span>Yargıtay Arama</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Background Design */}
+      <div className="auth-background">
+        <div className="bg-pattern"></div>
       </div>
     </div>
   )

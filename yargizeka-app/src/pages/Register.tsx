@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
 import { Navigate, Link, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff, Mail, Lock, User, Briefcase, Phone, MapPin, ArrowRight, Shield } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAppStore } from '../lib/store'
 
 const Register: React.FC = () => {
   const { isAuthenticated } = useAppStore()
   const navigate = useNavigate()
+  const [currentStep, setCurrentStep] = useState(1)
+  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -142,179 +145,311 @@ const Register: React.FC = () => {
     }
   }
 
-  return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1 className="auth-title">YargıZeka</h1>
-          <p className="auth-subtitle">Hukuk Profesyonelleri için AI Destekli Platform</p>
+  const nextStep = () => {
+    if (currentStep === 1) {
+      // İlk adım validasyonu
+      if (!formData.firstName || !formData.lastName || !formData.email) {
+        setError('Lütfen tüm zorunlu alanları doldurun')
+        return
+      }
+    }
+    setCurrentStep(currentStep + 1)
+    setError(null)
+  }
+
+  const prevStep = () => {
+    setCurrentStep(currentStep - 1)
+    setError(null)
+  }
+
+  const renderStep1 = () => (
+    <div className="step-content">
+      <div className="form-section">
+        <h2 className="form-title">Hesap Bilgileri</h2>
+        <p className="form-subtitle">Temel bilgilerinizi girin</p>
+      </div>
+
+      <div className="form-grid">
+        <div className="input-group">
+          <label htmlFor="firstName" className="modern-label">Ad *</label>
+          <div className="input-wrapper">
+            <User className="input-icon" size={20} />
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              className="modern-input"
+              placeholder="Adınız"
+              required
+            />
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="firstName" className="form-label">Ad *</label>
-              <input
-                id="firstName"
-                name="firstName"
-                type="text"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className="form-input"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="lastName" className="form-label">Soyad *</label>
-              <input
-                id="lastName"
-                name="lastName"
-                type="text"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="form-input"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">E-posta *</label>
+        <div className="input-group">
+          <label htmlFor="lastName" className="modern-label">Soyad *</label>
+          <div className="input-wrapper">
+            <User className="input-icon" size={20} />
             <input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="form-input"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="profession" className="form-label">Meslek *</label>
-            <select
-              id="profession"
-              name="profession"
-              value={formData.profession}
-              onChange={handleInputChange}
-              className="form-input"
-              required
-            >
-              <option value="">Mesleğinizi seçin</option>
-              <option value="avukat">Avukat</option>
-              <option value="hakim">Hakim</option>
-              <option value="savcı">Savcı</option>
-              <option value="icra_mudurou">İcra Müdürü</option>
-              <option value="icra_muavin">İcra Müavini</option>
-              <option value="hukuk_muşaviri">Hukuk Müşaviri</option>
-              <option value="hukuk_ogrencisi">Hukuk Öğrencisi</option>
-              <option value="akademisyen">Akademisyen</option>
-              <option value="diger">Diğer</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="barAssociation" className="form-label">Baro</label>
-            <input
-              id="barAssociation"
-              name="barAssociation"
+              id="lastName"
+              name="lastName"
               type="text"
-              value={formData.barAssociation}
+              value={formData.lastName}
               onChange={handleInputChange}
-              className="form-input"
-              placeholder="Örn: İstanbul Barosu"
+              className="modern-input"
+              placeholder="Soyadınız"
+              required
             />
           </div>
+        </div>
+      </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="phone" className="form-label">Telefon</label>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="0532 123 45 67"
-              />
-            </div>
+      <div className="input-group">
+        <label htmlFor="email" className="modern-label">E-posta Adresi *</label>
+        <div className="input-wrapper">
+          <Mail className="input-icon" size={20} />
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            className="modern-input"
+            placeholder="ornek@email.com"
+            required
+          />
+        </div>
+      </div>
 
-            <div className="form-group">
-              <label htmlFor="city" className="form-label">Şehir</label>
-              <input
-                id="city"
-                name="city"
-                type="text"
-                value={formData.city}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Örn: İstanbul"
-              />
-            </div>
+      <div className="form-grid">
+        <div className="input-group">
+          <label htmlFor="password" className="modern-label">Şifre *</label>
+          <div className="input-wrapper">
+            <Lock className="input-icon" size={20} />
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password}
+              onChange={handleInputChange}
+              className="modern-input"
+              placeholder="••••••••"
+              minLength={6}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="password-toggle"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
+        </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">Şifre *</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className="form-input"
-                minLength={6}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword" className="form-label">Şifre Tekrarı *</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className="form-input"
-                minLength={6}
-                required
-              />
-            </div>
+        <div className="input-group">
+          <label htmlFor="confirmPassword" className="modern-label">Şifre Tekrarı *</label>
+          <div className="input-wrapper">
+            <Lock className="input-icon" size={20} />
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              className="modern-input"
+              placeholder="••••••••"
+              minLength={6}
+              required
+            />
           </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderStep2 = () => (
+    <div className="step-content">
+      <div className="form-section">
+        <h2 className="form-title">Mesleki Bilgiler</h2>
+        <p className="form-subtitle">Hukuki alanınızı belirtin</p>
+      </div>
+
+      <div className="input-group">
+        <label htmlFor="profession" className="modern-label">Meslek *</label>
+        <div className="input-wrapper">
+          <Briefcase className="input-icon" size={20} />
+          <select
+            id="profession"
+            name="profession"
+            value={formData.profession}
+            onChange={handleInputChange}
+            className="modern-input"
+            required
+          >
+            <option value="">Mesleğinizi seçin</option>
+            <option value="avukat">Avukat</option>
+            <option value="hakim">Hakim</option>
+            <option value="savcı">Savcı</option>
+            <option value="icra_mudurou">İcra Müdürü</option>
+            <option value="icra_muavin">İcra Müavini</option>
+            <option value="hukuk_muşaviri">Hukuk Müşaviri</option>
+            <option value="hukuk_ogrencisi">Hukuk Öğrencisi</option>
+            <option value="akademisyen">Akademisyen</option>
+            <option value="diger">Diğer</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="input-group">
+        <label htmlFor="barAssociation" className="modern-label">Baro</label>
+        <div className="input-wrapper">
+          <Briefcase className="input-icon" size={20} />
+          <input
+            id="barAssociation"
+            name="barAssociation"
+            type="text"
+            value={formData.barAssociation}
+            onChange={handleInputChange}
+            className="modern-input"
+            placeholder="İstanbul Barosu"
+          />
+        </div>
+      </div>
+
+      <div className="form-grid">
+        <div className="input-group">
+          <label htmlFor="phone" className="modern-label">Telefon</label>
+          <div className="input-wrapper">
+            <Phone className="input-icon" size={20} />
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleInputChange}
+              className="modern-input"
+              placeholder="0532 123 45 67"
+            />
+          </div>
+        </div>
+
+        <div className="input-group">
+          <label htmlFor="city" className="modern-label">Şehir</label>
+          <div className="input-wrapper">
+            <MapPin className="input-icon" size={20} />
+            <input
+              id="city"
+              name="city"
+              type="text"
+              value={formData.city}
+              onChange={handleInputChange}
+              className="modern-input"
+              placeholder="İstanbul"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="modern-auth-container">
+      <div className="modern-auth-card register-card">
+        {/* Header */}
+        <div className="modern-auth-header">
+          <div className="brand-section">
+            <div className="brand-icon">
+              <Shield size={32} />
+            </div>
+            <h1 className="brand-title">YargıZeka</h1>
+          </div>
+          <p className="brand-subtitle">Hukuk dünyasının AI destekli geleceği</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="progress-container">
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${(currentStep / 2) * 100}%` }}
+            ></div>
+          </div>
+          <div className="progress-steps">
+            <span className={currentStep >= 1 ? 'active' : ''}>1</span>
+            <span className={currentStep >= 2 ? 'active' : ''}>2</span>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="modern-auth-form">
+          {currentStep === 1 ? renderStep1() : renderStep2()}
 
           {error && (
-            <div className="error-message">
-              {error}
+            <div className="modern-error">
+              <div className="error-content">
+                <span className="error-icon">⚠️</span>
+                <span>{error}</span>
+              </div>
             </div>
           )}
 
           {success && (
-            <div className="success-message">
-              {success}
+            <div className="modern-success">
+              <div className="success-content">
+                <span className="success-icon">✅</span>
+                <span>{success}</span>
+              </div>
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="auth-submit-btn"
-          >
-            {loading ? 'Yükleniyor...' : 'Kayıt Ol'}
-          </button>
+          <div className="form-actions">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={prevStep}
+                className="modern-back-btn"
+              >
+                Geri
+              </button>
+            )}
+            
+            {currentStep < 2 ? (
+              <button
+                type="button"
+                onClick={nextStep}
+                className="modern-submit-btn"
+              >
+                <span>İleri</span>
+                <ArrowRight size={20} />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={loading}
+                className="modern-submit-btn"
+              >
+                <span>{loading ? 'Kayıt Oluşturuluyor...' : 'Kayıt Ol'}</span>
+                {!loading && <ArrowRight size={20} />}
+              </button>
+            )}
+          </div>
 
-          <div className="auth-toggle">
-            <p>
-              Zaten hesabınız var mı?
-              <Link to="/login" className="auth-toggle-btn">
-                Giriş Yap
+          <div className="auth-footer">
+            <div className="login-section">
+              <span>Zaten hesabınız var mı? </span>
+              <Link to="/login" className="login-link">
+                Giriş Yapın
               </Link>
-            </p>
+            </div>
           </div>
         </form>
+      </div>
+
+      {/* Background Design */}
+      <div className="auth-background">
+        <div className="bg-pattern"></div>
       </div>
     </div>
   )
