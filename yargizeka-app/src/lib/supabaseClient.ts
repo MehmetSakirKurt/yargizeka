@@ -4,12 +4,33 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+console.log('Environment check:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  urlPreview: supabaseUrl ? supabaseUrl.substring(0, 20) + '...' : 'undefined'
+})
+
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL ve Anon Key çevre değişkenlerinde tanımlanmalıdır!')
 }
 
+if (supabaseUrl.includes('BURAYA_') || supabaseAnonKey.includes('BURAYA_')) {
+  throw new Error('Lütfen .env dosyasında gerçek Supabase anahtarlarını kullanın!')
+}
+
 // Supabase client'ı oluştur
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'x-client-info': 'yargizeka-app'
+    }
+  }
+})
 
 // Veritabanı türleri
 export interface User {

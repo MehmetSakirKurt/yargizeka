@@ -18,6 +18,40 @@ import Profil from './pages/Profil'
 function App() {
   const { setAuthState, setLoading } = useAppStore()
 
+  // Global error handler for browser extension conflicts
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      // Browser extension hatalarını yok say
+      if (event.reason?.message?.includes('Could not establish connection')) {
+        console.warn('Browser extension error ignored:', event.reason.message)
+        event.preventDefault()
+        return
+      }
+      
+      // Diğer hatalar için normal işlem
+      console.error('Unhandled promise rejection:', event.reason)
+    }
+
+    const handleError = (event: ErrorEvent) => {
+      // Browser extension hatalarını yok say
+      if (event.message?.includes('Could not establish connection')) {
+        console.warn('Browser extension error ignored:', event.message)
+        event.preventDefault()
+        return
+      }
+      
+      console.error('Global error:', event.error)
+    }
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+    window.addEventListener('error', handleError)
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+      window.removeEventListener('error', handleError)
+    }
+  }, [])
+
   useEffect(() => {
     // Loading state'i başlat
     setLoading(true)
@@ -25,11 +59,11 @@ function App() {
     // Mevcut oturumu kontrol et
     const getSession = async () => {
       try {
-        console.log('Session kontrol ediliyor...')
+        // console.log('Session kontrol ediliyor...')
         const { data: { session } } = await supabase.auth.getSession()
         
         if (session?.user) {
-          console.log('Session bulundu, kullanıcı bilgileri alınıyor...')
+          // console.log('Session bulundu, kullanıcı bilgileri alınıyor...')
           // Kullanıcı bilgilerini veritabanından al
           const { data: userData, error } = await supabase
             .from('users')
@@ -74,7 +108,7 @@ function App() {
             setAuthState(null, false)
           }
         } else {
-          console.log('Session bulunamadı')
+          // console.log('Session bulunamadı')
           setAuthState(null, false)
         }
       } catch (error) {
@@ -82,7 +116,7 @@ function App() {
         setAuthState(null, false)
       } finally {
         // Loading state'i bitir
-        console.log('Loading tamamlandı')
+        // console.log('Loading tamamlandı')
         setLoading(false)
       }
     }
