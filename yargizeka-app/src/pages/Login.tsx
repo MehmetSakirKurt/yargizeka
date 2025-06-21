@@ -20,54 +20,44 @@ const Login: React.FC = () => {
     setError(null)
 
     try {
+      console.log('Giriş yapılıyor...')
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       
-      if (error) throw error
+      if (error) {
+        console.error('Auth error:', error)
+        throw error
+      }
 
-      // Başarılı giriş sonrası kullanıcı profilini çek ve store'u güncelle
       if (data.user) {
-        console.log('Login başarılı, kullanıcı ID:', data.user.id)
-        // Auth state listener App.tsx'te bu değişikliği yakalayacak
+        console.log('Login başarılı, kullanıcı:', data.user.email)
+        // Auth state listener otomatik olarak yakalar, sadece bekle
       }
     } catch (error: any) {
       console.error('Login hatası:', error)
       
-      // Daha kullanıcı dostu hata mesajları
-      let errorMessage = 'Bir hata oluştu'
+      let errorMessage = 'Giriş yapılamadı'
       
-      if (error.message === 'Email not confirmed') {
-        errorMessage = 'E-posta adresiniz doğrulanmamış. Lütfen e-postanızı kontrol edin ve doğrulama linkine tıklayın.'
-      } else if (error.message === 'Invalid login credentials') {
-        errorMessage = 'E-posta adresi veya şifre hatalı. Lütfen tekrar deneyin.'
-      } else if (error.message === 'Too many requests') {
-        errorMessage = 'Çok fazla giriş denemesi yaptınız. Lütfen birkaç dakika bekleyin.'
-      } else {
-        errorMessage = error.message || 'Giriş yapılırken bir hata oluştu'
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = 'E-posta veya şifre hatalı'
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'E-posta doğrulanmamış'
+      } else if (error.message?.includes('Too many requests')) {
+        errorMessage = 'Çok fazla deneme, lütfen bekleyin'
       }
       
       setError(errorMessage)
-    } finally {
       setLoading(false)
     }
+    // Not: setLoading(false) işlemini App.tsx'teki auth listener yapacak
   }
 
   return (
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">
-            <img 
-              src="/logo.png" 
-              alt="YargıZeka Logo" 
-              className="auth-logo-image"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          </div>
           <h1 className="auth-title">YargıZeka</h1>
           <p className="auth-subtitle">Hukuk Profesyonelleri için AI Destekli Platform</p>
         </div>

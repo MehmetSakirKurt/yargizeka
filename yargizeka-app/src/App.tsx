@@ -16,131 +16,59 @@ import YargitayArama from './pages/YargitayArama'
 import Profil from './pages/Profil'
 
 function App() {
-  const { setAuthState, setLoading } = useAppStore()
-
-  // Global error handler for browser extension conflicts
-  useEffect(() => {
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      // Browser extension hatalarını yok say
-      if (event.reason?.message?.includes('Could not establish connection')) {
-        console.warn('Browser extension error ignored:', event.reason.message)
-        event.preventDefault()
-        return
-      }
-      
-      // Diğer hatalar için normal işlem
-      console.error('Unhandled promise rejection:', event.reason)
-    }
-
-    const handleError = (event: ErrorEvent) => {
-      // Browser extension hatalarını yok say
-      if (event.message?.includes('Could not establish connection')) {
-        console.warn('Browser extension error ignored:', event.message)
-        event.preventDefault()
-        return
-      }
-      
-      console.error('Global error:', event.error)
-    }
-
-    window.addEventListener('unhandledrejection', handleUnhandledRejection)
-    window.addEventListener('error', handleError)
-
-    return () => {
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
-      window.removeEventListener('error', handleError)
-    }
-  }, [])
+  const { setUser, setAuthenticated, setLoading } = useAppStore()
 
   useEffect(() => {
     setLoading(true)
-    let isProcessing = false // Çift event kontrolü
 
-    // Auth state değişikliklerini dinle (sadece bu yeterli!)
+    // Auth state değişikliklerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth event:', event, session?.user?.email)
-        
-        // Çift event'i önle
-        if (isProcessing && event === 'SIGNED_IN') {
-          console.log('Çift SIGNED_IN event önlendi')
-          return
-        }
+        console.log('🔑 Auth event:', event, session?.user?.email || 'no user')
         
         if (event === 'INITIAL_SESSION') {
-          // İlk yükleme
           if (session?.user) {
-            console.log('Mevcut session bulundu')
-            isProcessing = true
-            await handleUserSession(session)
-            isProcessing = false
+            console.log('✅ Session var, kullanıcı giriş yapmış')
+            await loadUserProfile(session.user)
           } else {
-            console.log('Session yok')
-            setAuthState(null, false)
+            console.log('❌ Session yok')
+            setUser(null)
+            setAuthenticated(false)
             setLoading(false)
           }
         } else if (event === 'SIGNED_IN' && session?.user) {
-          console.log('Yeni giriş yapıldı')
-          isProcessing = true
-          setLoading(true)
-          await handleUserSession(session)
-          isProcessing = false
+          console.log('🎉 Yeni giriş!')
+          await loadUserProfile(session.user)
         } else if (event === 'SIGNED_OUT') {
-          isProcessing = false
-          setAuthState(null, false)
+          console.log('👋 Çıkış yapıldı')
+          setUser(null)
+          setAuthenticated(false)
           setLoading(false)
         }
       }
     )
 
-    // Kullanıcı session'ını işle
-    const handleUserSession = async (session: any) => {
+    // Kullanıcı profilini yükle
+    const loadUserProfile = async (authUser: any) => {
       try {
-        console.log('Kullanıcı profili kontrol ediliyor...')
-        const { data: userData, error } = await supabase
+        // Database'den kullanıcı profilini al
+        const { data: userProfile, error } = await supabase
           .from('users')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', authUser.id)
           .single()
 
-        if (userData && !error) {
-          console.log('Kullanıcı profili bulundu, giriş başarılı')
-          setAuthState(userData, true)
-        } else if (error?.code === 'PGRST116') {
-          console.log('Kullanıcı profili yok, oluşturuluyor...')
-          // Kullanıcı profili yok, oluştur
-          const metadata = session.user.user_metadata || {}
-          const newUser = {
-            user_id: session.user.id,
-            email: session.user.email || '',
-            first_name: metadata.first_name || '',
-            last_name: metadata.last_name || '',
-            profession: metadata.profession || '',
-            bar_association: metadata.bar_association || null,
-            phone: metadata.phone || null,
-            city: metadata.city || null,
-            subscription_tier: 'free'
-          }
-
-          const { data: createdUser, error: createError } = await supabase
-            .from('users')
-            .insert(newUser)
-            .select()
-            .single()
-
-          if (createdUser && !createError) {
-            console.log('Yeni kullanıcı profili oluşturuldu')
-            setAuthState(createdUser, true)
-          } else {
-            console.error('Kullanıcı profili oluşturulamadı:', createError)
-            setAuthState(null, false)
-          }
+        if (userProfile && !error) {
+          // Profil bulundu
+          console.log('👤 Kullanıcı profili yüklendi')
+          setUser(userProfile)
+          setAuthenticated(true)
         } else {
-          console.log('Database hatası, basit profil oluşturuluyor...')
-          // Database hatası ama user var, basit profil oluştur
-          setAuthState({
-            user_id: session.user.id,
-            email: session.user.email || '',
+          // Profil yok, basit profil oluştur
+          console.log('🆕 Basit profil oluşturuluyor')
+          const simpleProfile = {
+            user_id: authUser.id,
+            email: authUser.email || '',
             first_name: '',
             last_name: '',
             profession: '',
@@ -148,19 +76,33 @@ function App() {
             phone: null,
             city: null,
             subscription_tier: 'free'
-          }, true)
+          }
+          
+          setUser(simpleProfile)
+          setAuthenticated(true)
         }
       } catch (error) {
-        console.error('User session error:', error)
-        setAuthState(null, false)
+        console.error('❌ Profil yükleme hatası:', error)
+        // Hata olsa bile giriş yapmış sayalım
+        setUser({
+          user_id: authUser.id,
+          email: authUser.email || '',
+          first_name: '',
+          last_name: '',
+          profession: '',
+          bar_association: null,
+          phone: null,
+          city: null,
+          subscription_tier: 'free'
+        })
+        setAuthenticated(true)
       } finally {
-        console.log('Auth işlemi tamamlandı, loading kapatılıyor')
         setLoading(false)
       }
     }
 
     return () => subscription.unsubscribe()
-  }, [setAuthState, setLoading])
+  }, [])
 
   return (
     <Router 
