@@ -1,0 +1,135 @@
+{
+  "name": "YargıZeka Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "yargizeka-chat",
+        "options": {
+          "noResponseBody": false
+        }
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "yargizeka-chat"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApiKey",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents",
+              "value": "={{ [{\"parts\": [{\"text\": \"Sen YargıZeka hukuk asistanısın. Türk hukukuna dair soruları yanıtla. Soru: \" + $json.question}]}] }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "gemini-api-node",
+      "name": "Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gemini API yanıtını işle\nconst response = $input.first();\n\ntry {\n  let geminiResponse = '';\n  \n  if (response.json && response.json.candidates && response.json.candidates[0]) {\n    const candidate = response.json.candidates[0];\n    if (candidate.content && candidate.content.parts && candidate.content.parts[0]) {\n      geminiResponse = candidate.content.parts[0].text;\n    }\n  }\n  \n  // Eğer yanıt boşsa varsayılan mesaj\n  if (!geminiResponse) {\n    geminiResponse = 'Üzgünüm, şu anda bu soruyu yanıtlayamıyorum. Lütfen tekrar deneyin.';\n  }\n  \n  return {\n    success: true,\n    response: geminiResponse,\n    timestamp: new Date().toISOString()\n  };\n} catch (error) {\n  return {\n    success: false,\n    response: 'Bir hata oluştu. Lütfen tekrar deneyin.',\n    error: error.message,\n    timestamp: new Date().toISOString()\n  };\n}"
+      },
+      "id": "process-response-node",
+      "name": "Process Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-node",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini API": {
+      "main": [
+        [
+          {
+            "node": "Process Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { MessageSquare, Send, User, Bot, Loader, Trash2 } from 'lucide-react'
-import { sendChatMessage } from '../lib/n8nClient'
+import { MessageSquare, Send, User, Bot, Loader, Trash2, Wifi, WifiOff } from 'lucide-react'
+import { sendChatMessage, testN8NConnection } from '../lib/n8nClient'
 import { supabase } from '../lib/supabaseClient'
 import { useAppStore, ChatMessage } from '../lib/store'
 
@@ -9,6 +9,7 @@ const HukukAsistani: React.FC = () => {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [n8nConnected, setN8nConnected] = useState<boolean | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -21,6 +22,14 @@ const HukukAsistani: React.FC = () => {
   }, [chatMessages])
 
   useEffect(() => {
+    // N8N bağlantısını test et
+    const checkN8NConnection = async () => {
+      const connected = await testN8NConnection()
+      setN8nConnected(connected)
+    }
+    
+    checkN8NConnection()
+    
     // Başlangıç mesajı ekle
     if (chatMessages.length === 0) {
       addChatMessage({
@@ -118,12 +127,26 @@ const HukukAsistani: React.FC = () => {
           <MessageSquare className="page-icon" size={32} />
           <div>
             <h1 className="page-title">Hukuk Asistanı</h1>
-            <p className="page-subtitle">AI destekli hukuki danışmanlık</p>
+            <p className="page-subtitle">AI destekli hukuki danışmanlık (Gemini API)</p>
           </div>
         </div>
-        <button onClick={handleClearChat} className="clear-chat-btn" title="Sohbeti Temizle">
-          <Trash2 size={18} />
-        </button>
+        <div className="header-actions">
+          <div className="n8n-status" title={n8nConnected ? 'N8N Bağlı' : 'N8N Bağlantısı Yok'}>
+            {n8nConnected === null ? (
+              <Loader className="animate-spin" size={16} />
+            ) : n8nConnected ? (
+              <Wifi className="text-green-500" size={16} />
+            ) : (
+              <WifiOff className="text-red-500" size={16} />
+            )}
+            <span className={n8nConnected ? 'text-green-600' : 'text-red-600'}>
+              {n8nConnected === null ? 'Test ediliyor...' : n8nConnected ? 'N8N Aktif' : 'N8N Offline'}
+            </span>
+          </div>
+          <button onClick={handleClearChat} className="clear-chat-btn" title="Sohbeti Temizle">
+            <Trash2 size={18} />
+          </button>
+        </div>
       </div>
 
       <div className="chat-container">
