@@ -54,17 +54,26 @@ function App() {
 
   useEffect(() => {
     setLoading(true)
+    let isProcessing = false // Çift event kontrolü
 
     // Auth state değişikliklerini dinle (sadece bu yeterli!)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth event:', event, session?.user?.email)
         
+        // Çift event'i önle
+        if (isProcessing && event === 'SIGNED_IN') {
+          console.log('Çift SIGNED_IN event önlendi')
+          return
+        }
+        
         if (event === 'INITIAL_SESSION') {
           // İlk yükleme
           if (session?.user) {
             console.log('Mevcut session bulundu')
+            isProcessing = true
             await handleUserSession(session)
+            isProcessing = false
           } else {
             console.log('Session yok')
             setAuthState(null, false)
@@ -72,9 +81,12 @@ function App() {
           }
         } else if (event === 'SIGNED_IN' && session?.user) {
           console.log('Yeni giriş yapıldı')
+          isProcessing = true
           setLoading(true)
           await handleUserSession(session)
+          isProcessing = false
         } else if (event === 'SIGNED_OUT') {
+          isProcessing = false
           setAuthState(null, false)
           setLoading(false)
         }
@@ -84,6 +96,7 @@ function App() {
     // Kullanıcı session'ını işle
     const handleUserSession = async (session: any) => {
       try {
+        console.log('Kullanıcı profili kontrol ediliyor...')
         const { data: userData, error } = await supabase
           .from('users')
           .select('*')
@@ -91,8 +104,10 @@ function App() {
           .single()
 
         if (userData && !error) {
+          console.log('Kullanıcı profili bulundu, giriş başarılı')
           setAuthState(userData, true)
         } else if (error?.code === 'PGRST116') {
+          console.log('Kullanıcı profili yok, oluşturuluyor...')
           // Kullanıcı profili yok, oluştur
           const metadata = session.user.user_metadata || {}
           const newUser = {
@@ -114,11 +129,14 @@ function App() {
             .single()
 
           if (createdUser && !createError) {
+            console.log('Yeni kullanıcı profili oluşturuldu')
             setAuthState(createdUser, true)
           } else {
+            console.error('Kullanıcı profili oluşturulamadı:', createError)
             setAuthState(null, false)
           }
         } else {
+          console.log('Database hatası, basit profil oluşturuluyor...')
           // Database hatası ama user var, basit profil oluştur
           setAuthState({
             user_id: session.user.id,
@@ -136,6 +154,7 @@ function App() {
         console.error('User session error:', error)
         setAuthState(null, false)
       } finally {
+        console.log('Auth işlemi tamamlandı, loading kapatılıyor')
         setLoading(false)
       }
     }
@@ -144,7 +163,12 @@ function App() {
   }, [setAuthState, setLoading])
 
   return (
-    <Router>
+    <Router 
+      future={{ 
+        v7_startTransition: true,
+        v7_relativeSplatPath: true 
+      }}
+    >
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
