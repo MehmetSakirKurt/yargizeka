@@ -96,7 +96,14 @@ function App() {
         
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('SIGNED_IN event işleniyor, user ID:', session.user.id)
+          // Loading state'i başlat ama timeout ile koruma ekle
           setLoading(true)
+          
+          // 10 saniye sonra loading'i kapat (timeout koruma)
+          setTimeout(() => {
+            console.log('Loading timeout - forcing loading to false')
+            setLoading(false)
+          }, 10000)
           
           try {
             // Email doğrulama kontrolü - eğer email doğrulanmamışsa uyarı ver ama devam et
@@ -153,9 +160,19 @@ function App() {
               console.log('Mevcut kullanıcı store\'a eklendi ve authenticated=true yapıldı:', userData)
             } else if (error) {
               console.error('Veritabanı hatası:', error)
-              setAuthState(null, false)
+              // Database hatası varsa auth state'i sıfırla ama yine de giriş yapmış say
+              console.log('Database error ama user var, sadece auth true yapıyorum')
+              setAuthState({
+                user_id: session.user.id,
+                email: session.user.email || '',
+                first_name: '',
+                last_name: '',
+                profession: '',
+                subscription_tier: 'free'
+              }, true)
             }
           } finally {
+            console.log('Loading false yapılıyor...')
             setLoading(false)
           }
         } else if (event === 'SIGNED_OUT') {
