@@ -106,20 +106,6 @@ function App() {
 
             console.log('Veritabanından kullanıcı bilgileri sorgulanıyor...')
             
-            // Önce veritabanı bağlantısını test et
-            const { data: testData, error: testError } = await supabase
-              .from('yargizeka.users')
-              .select('count')
-              .limit(1)
-            
-            console.log('Veritabanı bağlantı testi:', testData, testError)
-            
-            if (testError) {
-              console.error('Veritabanı bağlantısı başarısız:', testError)
-              setAuthState(null, false)
-              return
-            }
-            
             // Kullanıcı bilgilerini veritabanından al veya oluştur
             const { data: userData, error } = await supabase
               .from('yargizeka.users')
