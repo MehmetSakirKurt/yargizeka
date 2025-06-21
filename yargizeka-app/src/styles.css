@@ -1488,8 +1488,6 @@ body {
     font-size: 1.5rem;
   }
 }
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
 
 .register-card {
   max-width: 520px;
