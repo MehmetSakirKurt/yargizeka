@@ -5,40 +5,21 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 
 const Layout: React.FC = () => {
-  const { isAuthenticated, isLoading, user } = useAppStore()
-
-  console.log('Layout render - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'user:', user)
-
-  // Loading durumu çok uzun sürerse bypass et
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isLoading) {
-        console.log('Layout: Loading çok uzun sürdü, bypass ediliyor')
-        const store = useAppStore.getState()
-        store.setLoading(false)
-      }
-    }, 5000) // 5 saniye
-
-    return () => clearTimeout(timer)
-  }, [isLoading])
+  const { isAuthenticated, isLoading } = useAppStore()
 
   if (isLoading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Yükleniyor...</p>
-        <button 
-          onClick={() => useAppStore.getState().setLoading(false)}
-          style={{ marginTop: '1rem', padding: '0.5rem 1rem', cursor: 'pointer' }}
-        >
-          Devam Et
-        </button>
+        <p>YargıZeka Yükleniyor...</p>
+        <small style={{ marginTop: '1rem', opacity: 0.7, fontSize: '0.9rem' }}>
+          Kullanıcı doğrulanıyor
+        </small>
       </div>
     )
   }
 
-  if (!isAuthenticated || !user) {
-    console.log('Kullanıcı authenticated değil veya user bilgisi yok, login\'e yönlendiriliyor')
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
