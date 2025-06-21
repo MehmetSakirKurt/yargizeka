@@ -32,7 +32,7 @@ function App() {
           console.log('Session bulundu, kullanıcı bilgileri alınıyor...')
           // Kullanıcı bilgilerini veritabanından al
           const { data: userData, error } = await supabase
-            .from('yargizeka.users')
+            .from('users')
             .select('*')
             .eq('user_id', session.user.id)
             .single()
@@ -57,7 +57,7 @@ function App() {
             }
 
             const { data: createdUser, error: createError } = await supabase
-              .from('yargizeka.users')
+              .from('users')
               .insert(newUser)
               .select()
               .single()
@@ -108,7 +108,7 @@ function App() {
             
             // Kullanıcı bilgilerini veritabanından al veya oluştur
             const { data: userData, error } = await supabase
-              .from('yargizeka.users')
+              .from('users')
               .select('*')
               .eq('user_id', session.user.id)
               .single()
@@ -134,7 +134,7 @@ function App() {
               console.log('Oluşturulacak kullanıcı:', newUser)
 
               const { data: createdUser, error: createError } = await supabase
-                .from('yargizeka.users')
+                .from('users')
                 .insert(newUser)
                 .select()
                 .single()

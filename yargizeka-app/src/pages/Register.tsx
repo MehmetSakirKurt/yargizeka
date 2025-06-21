@@ -123,7 +123,7 @@ const Register: React.FC = () => {
 
   const createUserProfile = async (userId: string) => {
     const { error } = await supabase
-      .from('yargizeka.users')
+      .from('users')
       .insert({
         user_id: userId,
         email: formData.email,
